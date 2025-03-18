@@ -15,23 +15,47 @@ fi
 # Verificar se a pasta está vazia - adicionando exit code para garantir verificação correta
 if [ -z "$(ls -A $TUTORIALS_DIR 2>/dev/null)" ]; then
     echo "A pasta $TUTORIALS_DIR está vazia."
-    read -p "Por favor, forneça o link do repositório Git para clonar: " repo_url
     
-    if [ -n "$repo_url" ]; then
-        # Clonar temporariamente
-        temp_dir=$(mktemp -d)
-        git clone "$repo_url" "$temp_dir"
+    # Loop infinito até que um repositório válido seja fornecido
+    while true; do
+        read -p "Por favor, forneça o link do repositório Git para clonar: " repo_url
         
-        # Copiar conteúdo (não a pasta) para /tutoriais
-        sudo cp -r "$temp_dir"/* "$TUTORIALS_DIR"/
-        
-        # Remover diretório temporário
-        rm -rf "$temp_dir"
-        
-        echo "Conteúdo do repositório clonado para $TUTORIALS_DIR."
-    else
-        echo "Nenhum repositório fornecido. Continuando sem clonar."
-    fi
+        if [ -n "$repo_url" ]; then
+            # Verificar se o URL parece ser válido (verificação básica)
+            if [[ "$repo_url" == *"github.com"* || "$repo_url" == git@* ]]; then
+                echo "Clonando repositório: $repo_url"
+                
+                # Clonar temporariamente
+                temp_dir=$(mktemp -d)
+                if git clone "$repo_url" "$temp_dir"; then
+                    # Verificar se o clone foi bem-sucedido
+                    if [ -n "$(ls -A $temp_dir 2>/dev/null)" ]; then
+                        # Garantir que o diretório de destino existe
+                        mkdir -p "$TUTORIALS_DIR"
+                        
+                        # Copiar conteúdo (não a pasta) para /tutoriais
+                        cp -r "$temp_dir"/* "$TUTORIALS_DIR"/ 2>/dev/null
+                        
+                        # Remover diretório temporário
+                        rm -rf "$temp_dir"
+                        
+                        echo "Conteúdo do repositório clonado para $TUTORIALS_DIR."
+                        break  # Sai do loop quando tudo for concluído com sucesso
+                    else
+                        echo "O repositório parece estar vazio. Tente novamente."
+                        rm -rf "$temp_dir"
+                    fi
+                else
+                    echo "Falha ao clonar o repositório. Verifique o URL e tente novamente."
+                    rm -rf "$temp_dir"
+                fi
+            else
+                echo "O URL fornecido não parece ser um repositório Git válido. Tente novamente."
+            fi
+        else
+            echo "É necessário fornecer um repositório. Por favor, tente novamente."
+        fi
+    done
 fi
 
 # Verificar se o script já está instalado no /bin
