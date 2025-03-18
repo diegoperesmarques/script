@@ -1,0 +1,65 @@
+#!/bin/bash
+# Script para gerenciar e visualizar tutoriais
+
+# Caminho para a pasta onde estão os tutoriais
+TUTORIALS_DIR="/tutoriais"
+
+# Verificar se a pasta /tutoriais existe
+if [ ! -d "$TUTORIALS_DIR" ]; then
+    echo "A pasta $TUTORIALS_DIR não existe. Criando..."
+    sudo mkdir -p "$TUTORIALS_DIR"
+    sudo chmod 755 "$TUTORIALS_DIR"
+    echo "Pasta $TUTORIALS_DIR criada com permissões de leitura para todos os usuários."
+fi
+
+# Verificar se a pasta está vazia
+if [ -z "$(ls -A $TUTORIALS_DIR)" ]; then
+    echo "A pasta $TUTORIALS_DIR está vazia."
+    read -p "Por favor, forneça o link do repositório Git para clonar: " repo_url
+    
+    if [ -n "$repo_url" ]; then
+        # Clonar temporariamente
+        temp_dir=$(mktemp -d)
+        git clone "$repo_url" "$temp_dir"
+        
+        # Copiar conteúdo (não a pasta) para /tutoriais
+        sudo cp -r "$temp_dir"/* "$TUTORIALS_DIR"/
+        
+        # Remover diretório temporário
+        rm -rf "$temp_dir"
+        
+        echo "Conteúdo do repositório clonado para $TUTORIALS_DIR."
+    else
+        echo "Nenhum repositório fornecido. Continuando sem clonar."
+    fi
+fi
+
+# Verificar se o script já está instalado no /bin
+SCRIPT_NAME="manuais"
+if [ ! -f "/bin/$SCRIPT_NAME" ]; then
+    echo "Instalando o script $SCRIPT_NAME no diretório /bin..."
+    sudo cp "$0" "/bin/$SCRIPT_NAME"
+    sudo chmod +x "/bin/$SCRIPT_NAME"
+    
+    # Adicionar ao .bashrc se não existir
+    if ! grep -q "$SCRIPT_NAME" "$HOME/.bashrc"; then
+        echo "alias $SCRIPT_NAME='$SCRIPT_NAME'" >> "$HOME/.bashrc"
+        echo "Script instalado e alias adicionado ao .bashrc."
+        echo "Para usar imediatamente, execute: source ~/.bashrc"
+    else
+        echo "Alias para $SCRIPT_NAME já existe no .bashrc."
+    fi
+else
+    echo "O script $SCRIPT_NAME já está instalado no diretório /bin."
+fi
+
+# Abrir o fzf para listar arquivos e capturar o selecionado
+selected_file=$(find "$TUTORIALS_DIR" -type f | fzf --prompt="Selecione um arquivo: ")
+
+# Verificar se um arquivo foi selecionado
+if [[ -n "$selected_file" ]]; then
+    # Abrir o arquivo com o Frogmouth
+    frogmouth "$selected_file"
+else
+    echo "Nenhum arquivo selecionado."
+fi
