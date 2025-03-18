@@ -72,6 +72,42 @@ fi
 # Recarregar .bashrc
 source ~/.bashrc
 
+
+# Função para verificar se um comando está disponível
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Verificar se o fzf está instalado
+if ! command_exists fzf; then
+    echo "fzf não encontrado. Instalando..."
+    sudo apt update && sudo apt install -y fzf
+else
+    echo "fzf já está instalado."
+fi
+
+# Verificar se o frogmouth está instalado
+if ! command_exists frogmouth; then
+    echo "frogmouth não encontrado. Tentando instalar via pip3..."
+    if ! pip3 install frogmouth; then
+        echo "Falha ao instalar frogmouth com pip3. Verificando pipx..."
+
+        # Verificar se o pipx está instalado
+        if ! command_exists pipx; then
+            echo "pipx não encontrado. Instalando..."
+            sudo apt update && sudo apt install -y pipx
+        else
+            echo "pipx já está instalado."
+        fi
+
+        # Instalar frogmouth via pipx
+        echo "Instalando frogmouth via pipx..."
+        pipx install frogmouth
+    fi
+else
+    echo "frogmouth já está instalado."
+fi
+
 # Agora sim, depois de todas as verificações, abrimos o fzf
 # Abrir o fzf para listar arquivos e capturar o selecionado
 selected_file=$(find "$TUTORIALS_DIR" -type f 2>/dev/null | fzf --prompt="Selecione um arquivo: ")
