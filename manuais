@@ -12,8 +12,8 @@ if [ ! -d "$TUTORIALS_DIR" ]; then
     echo "Pasta $TUTORIALS_DIR criada com permissões de leitura para todos os usuários."
 fi
 
-# Verificar se a pasta está vazia
-if [ -z "$(ls -A $TUTORIALS_DIR)" ]; then
+# Verificar se a pasta está vazia - adicionando exit code para garantir verificação correta
+if [ -z "$(ls -A $TUTORIALS_DIR 2>/dev/null)" ]; then
     echo "A pasta $TUTORIALS_DIR está vazia."
     read -p "Por favor, forneça o link do repositório Git para clonar: " repo_url
     
@@ -42,10 +42,10 @@ if [ ! -f "/bin/$SCRIPT_NAME" ]; then
     sudo chmod +x "/bin/$SCRIPT_NAME"
     
     # Adicionar ao .bashrc se não existir
-    if ! grep -q "$SCRIPT_NAME" "$HOME/.bashrc"; then
+    if ! grep -q "alias $SCRIPT_NAME=" "$HOME/.bashrc"; then
         echo "alias $SCRIPT_NAME='$SCRIPT_NAME'" >> "$HOME/.bashrc"
         echo "Script instalado e alias adicionado ao .bashrc."
-        echo "Para usar imediatamente, execute: source ~/.bashrc"
+        source "$HOME/.bashrc" 2>/dev/null || echo "Execute 'source ~/.bashrc' para usar imediatamente."
     else
         echo "Alias para $SCRIPT_NAME já existe no .bashrc."
     fi
@@ -53,8 +53,9 @@ else
     echo "O script $SCRIPT_NAME já está instalado no diretório /bin."
 fi
 
+# Agora sim, depois de todas as verificações, abrimos o fzf
 # Abrir o fzf para listar arquivos e capturar o selecionado
-selected_file=$(find "$TUTORIALS_DIR" -type f | fzf --prompt="Selecione um arquivo: ")
+selected_file=$(find "$TUTORIALS_DIR" -type f 2>/dev/null | fzf --prompt="Selecione um arquivo: ")
 
 # Verificar se um arquivo foi selecionado
 if [[ -n "$selected_file" ]]; then
