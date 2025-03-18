@@ -55,22 +55,22 @@ fi
 
 # Verificar se o script já está instalado no /bin
 SCRIPT_NAME="manuais"
-if [ ! -f "/bin/$SCRIPT_NAME" ]; then
-    echo "Instalando o script $SCRIPT_NAME no diretório /bin..."
-    sudo cp "$0" "/bin/$SCRIPT_NAME"
-    sudo chmod +x "/bin/$SCRIPT_NAME"
-    
-    # Adicionar ao .bashrc se não existir
-    if ! grep -q "alias $SCRIPT_NAME=" "$HOME/.bashrc"; then
-        echo "alias $SCRIPT_NAME='$SCRIPT_NAME'" >> "$HOME/.bashrc"
-        echo "Script instalado e alias adicionado ao .bashrc."
-        source "$HOME/.bashrc" 2>/dev/null || echo "Execute 'source ~/.bashrc' para usar imediatamente."
-    else
-        echo "Alias para $SCRIPT_NAME já existe no .bashrc."
-    fi
+INSTALL_DIR="/bin"
+
+# Baixar o script para um local temporário
+TMP_FILE="/tmp/$SCRIPT_NAME"
+
+if [ ! -f "$INSTALL_DIR/$SCRIPT_NAME" ]; then
+    echo "Instalando o script $SCRIPT_NAME no diretório $INSTALL_DIR..."
+    sudo cp "$TMP_FILE" "$INSTALL_DIR/$SCRIPT_NAME"
+    sudo chmod +x "$INSTALL_DIR/$SCRIPT_NAME"
+    echo "Script instalado com sucesso em $INSTALL_DIR/$SCRIPT_NAME."
 else
-    echo "O script $SCRIPT_NAME já está instalado no diretório /bin."
+    echo "O script $SCRIPT_NAME já está instalado no diretório $INSTALL_DIR."
 fi
+
+# Recarregar .bashrc
+source ~/.bashrc
 
 # Agora sim, depois de todas as verificações, abrimos o fzf
 # Abrir o fzf para listar arquivos e capturar o selecionado
