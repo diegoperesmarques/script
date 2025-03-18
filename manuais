@@ -13,9 +13,9 @@ if [ ! -d "$TUTORIALS_DIR" ]; then
 fi
 
 # Verificar se a pasta está vazia - adicionando exit code para garantir verificação correta
-if [ -z "$(ls -A $TUTORIALS_DIR 2>/dev/null)" ]; then
+if [ -z "$(ls -A "$TUTORIALS_DIR" 2>/dev/null)" ]; then
     echo "A pasta $TUTORIALS_DIR está vazia."
-    
+
     # Loop infinito até que um repositório válido seja fornecido
     repo_url=""
     while [ -z "$repo_url" ]; do
@@ -31,30 +31,17 @@ if [ -z "$(ls -A $TUTORIALS_DIR 2>/dev/null)" ]; then
         if [[ "$repo_url" == *"github.com"* || "$repo_url" == git@* ]]; then
             echo "Clonando repositório: $repo_url"
             
-            # Clonar temporariamente
-            temp_dir=$(mktemp -d)
-            if git clone "$repo_url" "$temp_dir"; then
-                # Verificar se o clone foi bem-sucedido
-                if [ -n "$(ls -A $temp_dir 2>/dev/null)" ]; then
-                    # Garantir que o diretório de destino existe
-                    mkdir -p "$TUTORIALS_DIR"
-                    
-                    # Copiar conteúdo (não a pasta) para /tutoriais
-                    cp -r "$temp_dir"/* "$TUTORIALS_DIR"/ 2>/dev/null
-                    
-                    # Remover diretório temporário
-                    rm -rf "$temp_dir"
-                    
-                    echo "Conteúdo do repositório clonado para $TUTORIALS_DIR."
-                    break  # Sai do loop quando tudo for concluído com sucesso
-                else
-                    echo "O repositório parece estar vazio. Tente novamente."
-                    rm -rf "$temp_dir"
-                    repo_url=""  # Reset para continuar no loop
-                fi
+            # Clonar diretamente para /tutoriais (com sudo)
+            if sudo git clone "$repo_url" "$TUTORIALS_DIR"; then
+                echo "Repositório clonado com sucesso para $TUTORIALS_DIR."
+
+                # **Tornar a pasta somente leitura para todos os usuários**
+                sudo chmod -R a-w "$TUTORIALS_DIR"
+                echo "A pasta $TUTORIALS_DIR agora é somente leitura."
+                
+                break  # Sai do loop quando tudo for concluído com sucesso
             else
                 echo "Falha ao clonar o repositório. Verifique o URL e tente novamente."
-                rm -rf "$temp_dir"
                 repo_url=""  # Reset para continuar no loop
             fi
         else
@@ -62,6 +49,8 @@ if [ -z "$(ls -A $TUTORIALS_DIR 2>/dev/null)" ]; then
             repo_url=""  # Reset para continuar no loop
         fi
     done
+else
+    echo "A pasta $TUTORIALS_DIR já contém arquivos."
 fi
 
 # Verificar se o script já está instalado no /bin
