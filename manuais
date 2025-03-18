@@ -19,7 +19,8 @@ if [ -z "$(ls -A $TUTORIALS_DIR 2>/dev/null)" ]; then
     # Loop infinito até que um repositório válido seja fornecido
     repo_url=""
     while [ -z "$repo_url" ]; do
-        read -p "Por favor, forneça o link do repositório Git para clonar: " repo_url
+        echo -n "Por favor, forneça o link do repositório Git para clonar: "
+        read repo_url </dev/tty
         
         if [ -z "$repo_url" ]; then
             echo "É necessário fornecer um repositório. Por favor, tente novamente."
